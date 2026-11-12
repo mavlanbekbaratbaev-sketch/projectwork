@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Умный дом — проект локальной сети</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+<aside>
+ <h1>Умный дом<br>Локальная сеть</h1>
+ <p>Курсовая работа: проектирование ЛВС</p>
+ <button class="nav" data-v="ctl" aria-selected="true">Управление</button>
+ <button class="nav" data-v="net" aria-selected="false">Схема сети</button>
+ <button class="nav" data-v="addr" aria-selected="false">VLAN и адресация</button>
+ <button class="nav" data-v="spec" aria-selected="false">Оборудование и протоколы</button>
+ <div class="sp"></div>
+ <button id="theme">Сменить тему</button>
+</aside>
+<main>
+
+<section class="view" id="ctl">
+ <div class="top">
+  <div><h2>Мой дом</h2><span id="clock"></span></div>
+  <div class="stats">
+   <div class="stat"><b id="sOn">0</b><small>включено</small></div>
+   <div class="stat"><b id="sPw">0 Вт</b><small>потребление</small></div>
+   <div class="stat"><b id="sMode">Дома</b><small>режим охраны</small></div>
+  </div>
+ </div>
+ <div class="scenes" id="scenes"></div>
+ <div class="chips" id="rooms"></div>
+ <div class="grid" id="devs"></div>
+ <div class="card" id="en" style="margin-top:22px"></div>
+ <div class="log" id="log" aria-live="polite"></div>
+</section>
+
+<section class="view" id="net" hidden>
+ <div class="top"><div><h2>Топология сети</h2><span>Нажмите на узел, чтобы увидеть параметры</span></div></div>
+ <div class="card scroll"><svg id="topo" viewBox="0 0 760 480" width="100%" style="min-width:640px" role="img" aria-label="Топология сети умного дома"></svg></div>
+ <div class="card" id="info"><b>Выберите узел на схеме</b></div>
+</section>
+
+<section class="view" id="addr" hidden>
+ <div class="top"><div><h2>VLAN и адресация</h2><span>Сегментация по назначению устройств</span></div></div>
+ <div class="card scroll"><table>
+  <thead><tr><th>VLAN</th><th>Назначение</th><th>Подсеть</th><th>Шлюз</th><th>DHCP-пул</th><th>Хостов</th></tr></thead>
+  <tbody id="vt"></tbody></table></div>
+ <div class="two">
+  <div class="card"><h3 style="font-size:15px">Правила доступа (ACL)</h3><ul class="t">
+   <li>Гости (VLAN 50) — только в интернет, без доступа в другие VLAN.</li>
+   <li>Пользователи (VLAN 40) → сервер умного дома по портам 443 и 1883.</li>
+   <li>IoT-устройства (VLAN 20) не инициируют соединения в VLAN 40.</li>
+   <li>Камеры (VLAN 30) отправляют поток только на сервер.</li>
+   <li>VPN-клиенты получают доступ только к серверу (порт 443).</li>
+  </ul></div>
+  <div class="card"><h3 style="font-size:15px">Расчёт подсети</h3>
+   <p style="margin:6px 0 0;color:var(--mut)">Маска /24 = 255.255.255.0, 254 адреса. Для IoT-VLAN планируется до 60 устройств с запасом ×4 на расширение.</p>
+   <div class="row" style="margin-top:10px"><label for="nd">Устройств:</label><input id="nd" type="number" min="1" max="1000" value="60" style="width:80px;padding:6px;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--ink)"></div>
+   <p id="nr" style="margin:8px 0 0"></p></div>
+ </div>
+</section>
+
+<section class="view" id="spec" hidden>
+ <div class="top"><div><h2>Оборудование и протоколы</h2><span>Что используем и зачем</span></div></div>
+ <div class="two">
+  <div class="card"><h3 style="font-size:15px">Оборудование</h3><ul class="t">
+   <li><b>Маршрутизатор Cisco 2911</b> — выход в интернет, NAT, DHCP, межVLAN-маршрутизация (router-on-a-stick).</li>
+   <li><b>Коммутатор Cisco 2960</b> — доступ, VLAN, порты в режиме access.</li>
+   <li><b>Точка доступа Wi-Fi</b> — смартфоны, датчики и гостевая сеть.</li>
+   <li><b>Сервер умного дома</b> — шлюз, MQTT-брокер, правила автоматизации.</li>
+   <li><b>Умные устройства</b> — освещение, розетки, замок, датчики, камеры.</li>
+  </ul></div>
+  <div class="card"><h3 style="font-size:15px">Протоколы</h3><ul class="t">
+   <li><b>MQTT</b> — лёгкий обмен командами и телеметрией, порт 1883.</li>
+   <li><b>HTTP/HTTPS</b> — веб-интерфейс и приложение, порт 443.</li>
+   <li><b>RTSP</b> — видеопоток камер, порт 554.</li>
+   <li><b>DHCP, DNS, NTP</b> — адреса, имена, время.</li>
+   <li><b>802.1Q</b> — разметка VLAN на магистральных портах.</li>
+   <li><b>WPA2/WPA3</b> — защита Wi-Fi.</li>
+  </ul></div>
+ </div>
+ <div class="two">
+  <div class="card"><h3 style="font-size:15px">Дополнительные компоненты</h3><ul class="t">
+   <li><b>Zigbee-хаб</b> — подключает энергоэкономные датчики, которые не работают по Wi-Fi.</li>
+   <li><b>PoE-коммутатор</b> — питание камер и точек доступа по кабелю.</li>
+   <li><b>ИБП</b> — работа охраны и связи без света.</li>
+   <li><b>Резервный канал 4G</b> — интернет при сбое провайдера.</li>
+   <li><b>NAS</b> — хранение видеозаписей.</li>
+   <li><b>Локальный сервер</b> (например, Home Assistant) — дом работает без интернета.</li>
+   <li><b>VPN</b> — безопасный удалённый доступ.</li>
+  </ul></div>
+  <div class="card"><h3 style="font-size:15px">Правила автоматизации</h3><ul class="t">
+   <li>Протечка → клапан воды перекрывается.</li>
+   <li>Дым или газ → включается сирена.</li>
+   <li>Окно открыто при включённой охране → уведомление.</li>
+   <li>CO₂ выше нормы → включается вентиляция.</li>
+   <li>Сухая почва → запускается полив.</li>
+   <li>Движение в прихожей → включается свет.</li>
+  </ul></div>
+ </div>
+ <div class="card"><h3 style="font-size:15px">Безопасность</h3><ul class="t">
+  <li>Изоляция IoT-сегментов от пользовательских устройств.</li>
+  <li>Смена паролей по умолчанию, отключение неиспользуемых портов (shutdown).</li>
+  <li>Port-security на коммутаторе, SSH вместо Telnet.</li>
+  <li>Резервное питание (ИБП) для роутера и сервера.</li>
+ </ul></div>
+</section>
+
+</main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
